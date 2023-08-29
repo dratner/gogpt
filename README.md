@@ -1,7 +1,8 @@
 # gogpt
 
 This is a simply module for accessing ChatGPT from golang.
-#Using
+
+## Using
 
 These are mostly skeleton types implementing the ChatGPT API. To use:
 
@@ -11,8 +12,7 @@ prompt := "Can pigs fly?"
 generated, err := gpt.Generate(prompt)
 ```
 
-
-#Testing
+## Testing
 
 If you want to test this module, copy the file testconfig-sample.json to testconfig.json and replace the org id and api key with your settings. You can change anything else as well, but you'll need a working API key.
 
