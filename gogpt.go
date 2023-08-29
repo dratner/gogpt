@@ -1,6 +1,9 @@
 package gogpt
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/go-resty/resty/v2"
 )
 
@@ -39,7 +42,7 @@ type GoGPTError struct {
 }
 
 type GoGPTResponse struct {
-	Error   *GoGPTError   `json:"error"`
+	Error   *GoGPTError   `json:"error,omitempty"`
 	Id      string        `json:"id"`
 	Object  string        `json:"object"`
 	Created int32         `json:"created"`
@@ -55,14 +58,14 @@ type GoGPTQuery struct {
 }
 
 type GoGPT struct {
-	Key         string
-	OrgName     string
-	OrgId       string
-	Endpoint    string
-	Model       string
-	User        string
-	Role        string
-	Temperature float32
+	Key         string  `json:"gptkey"`
+	OrgName     string  `json:"gptorgname"`
+	OrgId       string  `json:"gptorgid"`
+	Endpoint    string  `json:"gptendpoint"`
+	Model       string  `json:"gptmodel"`
+	User        string  `json:"gptuser"`
+	Role        string  `json:"gptrole"`
+	Temperature float32 `json:"gpttemperature"`
 }
 
 func NewGoGPT(key string, orgName string, orgId string, endpoint string, model string, user string, role string, temperature float32) *GoGPT {
@@ -78,7 +81,7 @@ func NewGoGPT(key string, orgName string, orgId string, endpoint string, model s
 	}
 }
 
-func (g *GoGPT) Generate(prompt string) (string, error) {
+func (g *GoGPT) Generate(prompt string) (*GoGPTResponse, error) {
 	client := resty.New()
 
 	msg := GoGPTMessage{
@@ -101,7 +104,19 @@ func (g *GoGPT) Generate(prompt string) (string, error) {
 		SetBody(query).
 		Post(g.Endpoint)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return resp.String(), nil
+
+	gptResp := new(GoGPTResponse)
+	err = json.Unmarshal(resp.Body(), &gptResp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if gptResp.Error != nil {
+		return nil, fmt.Errorf("Error: %v", gptResp.Error.Message)
+	}
+
+	return gptResp, nil
 }

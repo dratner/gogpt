@@ -1,0 +1,10 @@
+{
+    "gptkey" : "sk-YOURKEYHERE",
+	"gptorgname" : "Personal",
+	"gptorgid" : "org-YOURORGHERE",
+	"gptendpoint" : "https://api.openai.com/v1/chat/completions",
+	"gptmodel" : "gpt-3.5-turbo",
+	"gptuser" : "Personal",
+	"gptrole" : "system",
+	"gpttemperature" : 0.7
+}
