@@ -11,14 +11,28 @@ import (
 	Based on the the ChatGPT documentation here: https://platform.openai.com/docs/api-reference/chat/object
 */
 
+const (
+	API_ENDPOINT   = "https://api.openai.com/v1/chat/completions"
+	MODEL_35_TURBO = "gpt-3.5-turbo"
+	ROLE_SYSTEM    = "system"
+	ROLE_USER      = "user"
+	ROLE_ASSISTANT = "assistant"
+	ROLE_FUNCTION  = "function"
+)
+
 type GoGPTFunctionCall struct {
 	Name      string `json:"name"`
 	Arguments string `json:"arguments"`
 }
 
+/*
+	Role is an enum of system, user, assistant, or function.
+*/
+
 type GoGPTMessage struct {
-	Role         string             `json:"role,omitempty"`
+	Role         string             `json:"role"`
 	Content      string             `json:"content"`
+	Name         string             `json:"name,omitempty"`
 	FunctionCall *GoGPTFunctionCall `json:"function_call,omitempty"`
 }
 
@@ -51,57 +65,71 @@ type GoGPTResponse struct {
 	Usage   GoGPTUsage    `json:"usage"`
 }
 
+type GoGPTFunction struct {
+	Name        string      `json:"name"`
+	Description string      `json:"description,omitempty"`
+	Parameters  interface{} `json:"parameters"`
+}
+
+/*
+	Only Model and Messages are required.
+*/
+
 type GoGPTQuery struct {
-	Model       string         `json:"model"`
-	Temperature float32        `json:"temperature"`
-	Messages    []GoGPTMessage `json:"messages"`
+	Model           string             `json:"model"`
+	Messages        []GoGPTMessage     `json:"messages"`
+	Functions       *[]GoGPTFunction   `json:"functions,omitempty"`
+	FunctionCall    string             `json:"function_call,omitempty"`
+	Temperature     float32            `json:"temperature,omitempty"`
+	TopP            float32            `json:"top_p,omitempty"`
+	N               int                `json:"n,omitempty"`
+	Stream          bool               `json:"stream,omitempty"`
+	Stop            string             `json:"stop,omitempty"`
+	MaxTokens       int                `json:"max_tokens,omitempty"`
+	PresencePenalty float32            `json:"presence_penalty,omitempty"`
+	LogitBias       map[string]float32 `json:"logit_bias,omitempty"`
+	User            string             `json:"user,omitempty"`
+	Key             string             `json:"-"`
+	OrgName         string             `json:"-"`
+	OrgId           string             `json:"-"`
+	Endpoint        string             `json:"-"`
 }
 
-type GoGPT struct {
-	Key         string  `json:"gptkey"`
-	OrgName     string  `json:"gptorgname"`
-	OrgId       string  `json:"gptorgid"`
-	Endpoint    string  `json:"gptendpoint"`
-	Model       string  `json:"gptmodel"`
-	User        string  `json:"gptuser"`
-	Role        string  `json:"gptrole"`
-	Temperature float32 `json:"gpttemperature"`
-}
+func NewGoGPTQuery(key string) *GoGPTQuery {
 
-func NewGoGPT(key string, orgName string, orgId string, endpoint string, model string, user string, role string, temperature float32) *GoGPT {
-	return &GoGPT{
+	// Set minimal defaults
+
+	return &GoGPTQuery{
 		Key:         key,
-		OrgName:     orgName,
-		OrgId:       orgId,
-		Endpoint:    endpoint,
-		Model:       model,
-		User:        user,
-		Role:        role,
-		Temperature: temperature,
+		Endpoint:    API_ENDPOINT,
+		Model:       MODEL_35_TURBO,
+		Temperature: 0.7,
+		MaxTokens:   150,
 	}
 }
 
-func (g *GoGPT) Generate(prompt string) (*GoGPTResponse, error) {
-	client := resty.New()
+func (g *GoGPTQuery) AddMessage(role string, content string) {
 
 	msg := GoGPTMessage{
-		Role:         g.Role,
-		Content:      prompt,
-		FunctionCall: nil,
+		Role:    role,
+		Content: content,
 	}
 
-	query := GoGPTQuery{
-		Model:       g.Model,
-		Temperature: g.Temperature,
-		Messages: []GoGPTMessage{
-			msg,
-		},
+	g.Messages = append(g.Messages, msg)
+}
+
+func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
+
+	client := resty.New()
+
+	if len(g.Messages) == 0 {
+		return nil, fmt.Errorf("No messages provided")
 	}
 
 	resp, err := client.R().
 		SetHeader("Authorization", "Bearer "+g.Key).
 		SetHeader("Content-Type", "application/json").
-		SetBody(query).
+		SetBody(g).
 		Post(g.Endpoint)
 	if err != nil {
 		return nil, err
