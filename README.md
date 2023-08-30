@@ -7,9 +7,8 @@ This is a simply module for accessing ChatGPT from golang.
 These are mostly skeleton types implementing the ChatGPT API. To use:
 
 ```
-gpt := NewGoGPT(key, orgName, orgId, endpoint, model, user, role, temperature)
-prompt := "Can pigs fly?"
-generated, err := gpt.Generate(prompt)
+gpt := NewGoGPTQuery(OPENAI_KEY)
+generated, err := gpt.AddMessage(gogpt.ROLE_SYSTEM, "You are a detective.").AddMessage(gogpt.ROLE_USER, "Solve the Great Train Mystery").Generate()
 ```
 
 ## Testing
