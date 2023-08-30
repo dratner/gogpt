@@ -108,7 +108,7 @@ func NewGoGPTQuery(key string) *GoGPTQuery {
 	}
 }
 
-func (g *GoGPTQuery) AddMessage(role string, content string) {
+func (g *GoGPTQuery) AddMessage(role string, content string) *GoGPTQuery {
 
 	msg := GoGPTMessage{
 		Role:    role,
@@ -116,6 +116,8 @@ func (g *GoGPTQuery) AddMessage(role string, content string) {
 	}
 
 	g.Messages = append(g.Messages, msg)
+
+	return g
 }
 
 func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {

@@ -33,11 +33,9 @@ func TestGenerate(t *testing.T) {
 	gpt.OrgId = conf.GptOrgId
 	gpt.MaxTokens = 100
 
-	gpt.AddMessage(ROLE_SYSTEM, "Can pigs fly?")
-
 	t.Logf("Query: %+v", gpt)
 
-	generated, err := gpt.Generate()
+	generated, err := gpt.AddMessage(ROLE_SYSTEM, "Can pigs fly?").Generate()
 
 	if err != nil {
 		t.Errorf("Error generating: %v", err)
