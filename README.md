@@ -1,14 +1,14 @@
 # gogpt
 
-This is a simply module for accessing ChatGPT from golang.
+This is a simple module for accessing ChatGPT from golang.
 
 ## Using
 
 These are mostly skeleton types implementing the ChatGPT API. To use:
 
 ```
-gpt := NewGoGPTQuery(OPENAI_KEY)
-generated, err := gpt.AddMessage(gogpt.ROLE_SYSTEM, "You are a detective.").AddMessage(gogpt.ROLE_USER, "Solve the Great Train Mystery").Generate()
+generated, err := NewGoGPTQuery(OPENAI_KEY).AddMessage(gogpt.ROLE_SYSTEM, "You are a detective.").AddMessage(gogpt.ROLE_USER, "Solve the Great Train Mystery").Generate()
+fmt.Printf("Result: %s\n",generated.Choices[0].Message.Content)
 ```
 
 ## Testing
