@@ -3,6 +3,7 @@ package gogpt
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -64,6 +65,55 @@ func TestGenerate(t *testing.T) {
 
 func TestGenerateWithFunctions(t *testing.T) {
 
+	type Event struct {
+		Action    string `json:"action"`
+		Direction string `json:"direction"`
+		Distance  string `json:"distance"`
+	}
+
+	gpt, err := buildTestQueryHelper()
+
+	if err != nil {
+		t.Errorf("Error building test query: %v", err)
+		return
+	}
+
+	gpt.AddMessage(ROLE_SYSTEM, "Take this game command: 'Walk forward three steps' and make it go into json format.")
+	gpt.AddFunction("get_game_instruction_from_user_input", "Get game instruction from user input", Event{})
+
+	tmp, _ := json.Marshal(gpt)
+	t.Logf("RAW: %+v", string(tmp))
+
+	if err != nil {
+		t.Errorf("Error building test query: %v", err)
+		return
+	}
+
+	t.Logf("Query: %+v", gpt)
+
+	resp, err := gpt.Generate()
+
+	if err != nil {
+		t.Errorf("Error generating: %v", err)
+		return
+	}
+
+	t.Logf("Raw Response: %+v", resp)
+	t.Logf("\nJSON:\n %s\nEND\n\n", resp.Choices[0].Message.Content)
+
+	e := new(Event)
+	err = json.Unmarshal([]byte(resp.Choices[0].Message.Content), e)
+
+	if err != nil {
+		t.Errorf("Error unmarshalling: %v", err)
+		return
+	}
+
+	if strings.EqualFold(e.Action, "Walk") {
+		t.Logf("It walks!\n")
+	} else {
+		t.Errorf("Error: %+v", e)
+	}
 }
 
 func TestGenerateChat(t *testing.T) {

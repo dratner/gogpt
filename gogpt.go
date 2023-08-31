@@ -3,8 +3,10 @@ package gogpt
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/invopop/jsonschema"
 )
 
 /*
@@ -66,19 +68,19 @@ type GoGPTResponse struct {
 }
 
 type GoGPTFunction struct {
-	Name        string      `json:"name"`
-	Description string      `json:"description,omitempty"`
-	Parameters  interface{} `json:"parameters"`
+	Name        string             `json:"name"`
+	Description string             `json:"description,omitempty"`
+	Parameters  *jsonschema.Schema `json:"parameters"`
 }
 
 /*
-	Only Model and Messages are required.
+	Only Key, Model, and Messages are required.
 */
 
 type GoGPTQuery struct {
 	Model           string             `json:"model"`
 	Messages        []GoGPTMessage     `json:"messages"`
-	Functions       *[]GoGPTFunction   `json:"functions,omitempty"`
+	Functions       []GoGPTFunction    `json:"functions,omitempty"`
 	FunctionCall    string             `json:"function_call,omitempty"`
 	Temperature     float32            `json:"temperature,omitempty"`
 	TopP            float32            `json:"top_p,omitempty"`
@@ -108,6 +110,26 @@ func NewGoGPTQuery(key string) *GoGPTQuery {
 	}
 }
 
+func (g *GoGPTQuery) AddFunction(name string, desc string, obj interface{}) (*GoGPTQuery, error) {
+
+	fjson := jsonschema.Reflect(obj)
+	tname := reflect.TypeOf(obj).Name()
+
+	if tname == "" {
+		return nil, fmt.Errorf("could not determine type name")
+	}
+
+	f := GoGPTFunction{
+		Name:        name,
+		Description: desc,
+		Parameters:  fjson.Definitions[tname],
+	}
+
+	g.Functions = append(g.Functions, f)
+
+	return g, nil
+}
+
 func (g *GoGPTQuery) AddMessage(role string, content string) *GoGPTQuery {
 
 	msg := GoGPTMessage{
@@ -125,7 +147,7 @@ func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
 	client := resty.New()
 
 	if len(g.Messages) == 0 {
-		return nil, fmt.Errorf("No messages provided")
+		return nil, fmt.Errorf("no messages provided")
 	}
 
 	resp, err := client.R().
