@@ -19,18 +19,26 @@ type TestConfig struct {
 
 func buildTestQueryHelper() (*GoGPTQuery, error) {
 
-	f := "./testconfig.json"
-	file, err := os.ReadFile(f)
-
-	if err != nil {
-		return nil, err
-	}
-
 	conf := new(TestConfig)
-	err = json.Unmarshal([]byte(file), &conf)
 
-	if err != nil {
-		return nil, err
+	key := os.Getenv("OPENAI_KEY")
+
+	// Try to pull the key from the environment. If that fails, try to pull it from a file.
+	if len(key) > 0 {
+		conf.GptKey = key
+	} else {
+		f := "./testconfig.json"
+		file, err := os.ReadFile(f)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = json.Unmarshal([]byte(file), &conf)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	gpt := NewGoGPTQuery(conf.GptKey)
