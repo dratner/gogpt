@@ -11,6 +11,8 @@ import (
 
 /*
 	Based on the the ChatGPT documentation here: https://platform.openai.com/docs/api-reference/chat/object
+
+	There are different token limit for the different models: https://openai.com/pricing
 */
 
 const (

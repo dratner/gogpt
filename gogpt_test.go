@@ -116,6 +116,26 @@ func TestGenerateWithFunctions(t *testing.T) {
 	}
 }
 
+func TestInfiniteChat(t *testing.T) {
+
+	gpt, err := buildTestQueryHelper()
+
+	if err != nil {
+		t.Errorf("Error building test query: %v", err)
+	}
+
+	chat := NewGoGPTChat(gpt.Key)
+
+	generated, err := chat.AddMessage(ROLE_SYSTEM, "Pretend you are the ghost of a young woman named Lucy who was an army camp follower who died of malnutrition in New York in 1791. You loved a dashing young army officer who promised to come get you, but never came. You are melancholy and always hungry. You know nothing that happened after the date of your death. Speak in colonial american dialect. It's hard for you to speak, so keep your replies brief.").AddMessage(ROLE_USER, "Can you tell me how you died?").Generate()
+
+	if err != nil {
+		t.Errorf("Error generating: %v", err)
+	}
+
+	t.Logf("GPT: %s\n", generated.Choices[0].Message.Content)
+
+}
+
 func TestGenerateChat(t *testing.T) {
 
 	gpt1, err := buildTestQueryHelper()
