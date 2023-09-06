@@ -34,8 +34,7 @@ const (
 func MaxQueryTokens(model string) int {
 	switch model {
 	case MODEL_35_TURBO:
-		return 1024
-		//TEMP: return 4096
+		return 4096
 	default:
 		return 2048
 	}
