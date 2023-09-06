@@ -196,3 +196,54 @@ func TestGenerateChat(t *testing.T) {
 
 	t.Logf("Generated: %+v", generated)
 }
+
+func TestGenerateInfiniteChat(t *testing.T) {
+
+	gpt, err := buildTestQueryHelper()
+
+	if err != nil {
+		t.Errorf("error building test query: %s", err)
+	}
+
+	chat1 := NewGoGPTChat(gpt.Key)
+	chat2 := NewGoGPTChat(gpt.Key)
+
+	chat1.AddMessage(ROLE_SYSTEM, "You are a bumbling but confident French detective talking to your superintendant.").AddMessage(ROLE_USER, "Solve the great train robbery.")
+	chat2.AddMessage(ROLE_SYSTEM, "You are a serious and dour English police superintendant talking to a detective. You want him to solve the great train robbery.")
+
+	t.Logf("GENERATING SEED MESSAGE\n")
+
+	generated, err := chat1.Generate()
+
+	if err != nil {
+		t.Errorf("error generating: %s", err)
+	}
+
+	t.Logf("GPT1: %s\n\n", generated.Choices[0].Message.Content)
+	t.Logf("USAGE: %d\n\n", generated.Usage.TotalTokens)
+
+	for i := 0; i < 10; i++ {
+
+		t.Logf("\n\nITERATION %d\n\n", i)
+
+		generated, err = chat2.AddMessage(ROLE_USER, generated.Choices[0].Message.Content).Generate()
+
+		if err != nil {
+			t.Errorf("error generating: %s", err)
+		}
+
+		t.Logf("GPT2: %s\n\n", generated.Choices[0].Message.Content)
+		t.Logf("USAGE: %d\n\n", generated.Usage.TotalTokens)
+
+		generated, err = chat1.AddMessage(ROLE_USER, generated.Choices[0].Message.Content).Generate()
+
+		if err != nil {
+			t.Errorf("error generating: %s", err)
+		}
+
+		t.Logf("GPT1: %s\n\n", generated.Choices[0].Message.Content)
+		t.Logf("USAGE: %d\n\n", generated.Usage.TotalTokens)
+	}
+
+	t.Logf("Completed successfully.")
+}
