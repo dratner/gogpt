@@ -169,7 +169,7 @@ func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
 	}
 
 	if gptResp.Error != nil {
-		return nil, fmt.Errorf("Error: %v", gptResp.Error.Message)
+		return nil, fmt.Errorf("error: %v", gptResp.Error.Message)
 	}
 
 	return gptResp, nil
