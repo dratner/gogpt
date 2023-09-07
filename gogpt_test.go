@@ -21,12 +21,15 @@ func buildTestQueryHelper() (*GoGPTQuery, error) {
 
 	conf := new(TestConfig)
 
-	key := os.Getenv("OPENAI_KEY")
+	// Try to pull the config vars from the environment.
 
-	// Try to pull the key from the environment. If that fails, try to pull it from a file.
-	if len(key) > 0 {
-		conf.GptKey = key
-	} else {
+	conf.GptKey = os.Getenv("OPENAI_KEY")
+	conf.GptOrgId = os.Getenv("OPENAI_ORG_ID")
+	conf.GptOrgName = os.Getenv("OPENAI_ORG_NAME")
+
+	// If that fails, try to pull them from a file.
+	if len(conf.GptKey) == 0 {
+
 		f := "./testconfig.json"
 		file, err := os.ReadFile(f)
 
@@ -122,79 +125,6 @@ func TestGenerateWithFunctions(t *testing.T) {
 	} else {
 		t.Errorf("Error: %+v", e)
 	}
-}
-
-func TestInfiniteChat(t *testing.T) {
-
-	gpt, err := buildTestQueryHelper()
-
-	if err != nil {
-		t.Errorf("Error building test query: %v", err)
-	}
-
-	chat := NewGoGPTChat(gpt.Key)
-
-	generated, err := chat.AddMessage(ROLE_SYSTEM, "Pretend you are the ghost of a young woman named Lucy who was an army camp follower who died of malnutrition in New York in 1791. You loved a dashing young army officer who promised to come get you, but never came. You are melancholy and always hungry. You know nothing that happened after the date of your death. Speak in colonial american dialect. It's hard for you to speak, so keep your replies brief.").AddMessage(ROLE_USER, "Can you tell me how you died?").Generate()
-
-	if err != nil {
-		t.Errorf("Error generating: %v", err)
-	}
-
-	t.Logf("GPT: %s\n", generated.Choices[0].Message.Content)
-
-}
-
-func TestGenerateChat(t *testing.T) {
-
-	gpt1, err := buildTestQueryHelper()
-
-	if err != nil {
-		t.Errorf("Error building test query: %v", err)
-	}
-
-	gpt2, err := buildTestQueryHelper()
-
-	if err != nil {
-		t.Errorf("Error building test query: %v", err)
-	}
-
-	generated, err := gpt1.AddMessage(ROLE_SYSTEM, "You are a bumbling but confident French detective talking to your superintendant.").AddMessage(ROLE_USER, "Can you solve the great train robbery?").Generate()
-
-	if err != nil {
-		t.Errorf("Error generating: %v", err)
-	}
-
-	t.Logf("GPT1: %s\n", generated.Choices[0].Message.Content)
-
-	generated, err = gpt2.AddMessage(ROLE_SYSTEM, "You are a serious and dour English police superintendant talking to a detective. You asked the detective to solve the great train robbery.").AddMessage(ROLE_USER, generated.Choices[0].Message.Content).Generate()
-
-	if err != nil {
-		t.Errorf("Error generating: %v", err)
-	}
-
-	t.Logf("GPT2: %s\n", generated.Choices[0].Message.Content)
-
-	generated, err = gpt1.AddMessage(ROLE_USER, generated.Choices[0].Message.Content).Generate()
-
-	if err != nil {
-		t.Errorf("Error generating: %v", err)
-	}
-
-	t.Logf("GPT1: %s\n", generated.Choices[0].Message.Content)
-
-	generated, err = gpt2.AddMessage(ROLE_USER, generated.Choices[0].Message.Content).Generate()
-
-	if err != nil {
-		t.Errorf("Error generating: %v", err)
-	}
-
-	t.Logf("GPT2: %s\n", generated.Choices[0].Message.Content)
-
-	t.Logf("Query1: %+v", gpt1)
-
-	t.Logf("Query2: %+v", gpt2)
-
-	t.Logf("Generated: %+v", generated)
 }
 
 func TestGenerateInfiniteChat(t *testing.T) {
