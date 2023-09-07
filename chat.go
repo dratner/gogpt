@@ -2,6 +2,8 @@ package gogpt
 
 import (
 	"fmt"
+
+	"github.com/pkoukk/tiktoken-go"
 )
 
 const (
@@ -41,8 +43,19 @@ func MaxQueryTokens(model string) int {
 }
 
 // This is a rough estimate of the number of tokens in a string.
-func TokenEstimator(m GoGPTMessage) int {
-	return len(m.Content) / 4
+func TokenEstimator(msg GoGPTMessage, model string) int {
+	//return len(m.Content) / 4
+	tkm, err := tiktoken.EncodingForModel(model)
+
+	if err != nil {
+		return 0
+	}
+
+	// encode
+	token := tkm.Encode(msg.Content, nil, nil)
+
+	return len(token)
+
 }
 
 func NewGoGPTChat(key string) *GoGPTChat {
@@ -77,16 +90,16 @@ func (g *GoGPTChat) Generate() (*GoGPTResponse, error) {
 
 	for i, msg := range g.Query.Messages {
 		if msg.Role == ROLE_SYSTEM && first_sys_msg {
-			prompt_tokens += TokenEstimator(msg)
+			prompt_tokens += TokenEstimator(msg, g.Query.Model)
 			messages = append(messages, msg)
 			first_sys_msg = false
 		} else if msg.Role == ROLE_FUNCTION {
-			func_tokens += TokenEstimator(msg)
+			func_tokens += TokenEstimator(msg, g.Query.Model)
 			messages = append(messages, msg)
 		} else if i == len(g.Query.Messages)-1 {
-			new_message_tokens += TokenEstimator(msg)
+			new_message_tokens += TokenEstimator(msg, g.Query.Model)
 		} else {
-			context_tokens += TokenEstimator(msg)
+			context_tokens += TokenEstimator(msg, g.Query.Model)
 			messages_to_summarize = append(messages_to_summarize, msg)
 		}
 	}
