@@ -27,7 +27,7 @@ func buildTestQueryHelper() (*GoGPTQuery, error) {
 	conf.GptOrgId = os.Getenv("OPENAI_ORG_ID")
 	conf.GptOrgName = os.Getenv("OPENAI_ORG_NAME")
 
-	// If that fails, try to pull them from a file.
+	// If that fails, try to pull them from a file. Use key to test.
 	if len(conf.GptKey) == 0 {
 
 		f := "./testconfig.json"
@@ -89,7 +89,7 @@ func TestGenerateWithFunctions(t *testing.T) {
 		return
 	}
 
-	gpt.AddMessage(ROLE_SYSTEM, "Take this game command: 'Walk forward three steps' and make it go into json format.")
+	gpt.AddMessage(ROLE_SYSTEM, "Take this game command: 'Walk forward three steps' and make it go into json format. Send a single function call.")
 	gpt.AddFunction("get_game_instruction_from_user_input", "Get game instruction from user input", Event{})
 
 	tmp, _ := json.Marshal(gpt)
