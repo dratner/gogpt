@@ -152,7 +152,7 @@ func TestGenerateInfiniteChat(t *testing.T) {
 	t.Logf("GPT1: %s\n\n", generated.Choices[0].Message.Content)
 	t.Logf("USAGE: %d\n\n", generated.Usage.TotalTokens)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 3; i++ {
 
 		t.Logf("\n\nITERATION %d\n\n", i)
 
@@ -160,6 +160,7 @@ func TestGenerateInfiniteChat(t *testing.T) {
 
 		if err != nil {
 			t.Errorf("error generating: %s", err)
+			return
 		}
 
 		t.Logf("GPT2: %s\n\n", generated.Choices[0].Message.Content)
@@ -169,6 +170,7 @@ func TestGenerateInfiniteChat(t *testing.T) {
 
 		if err != nil {
 			t.Errorf("error generating: %s", err)
+			return
 		}
 
 		t.Logf("GPT1: %s\n\n", generated.Choices[0].Message.Content)

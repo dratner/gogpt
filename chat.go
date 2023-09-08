@@ -42,9 +42,9 @@ func MaxQueryTokens(model string) int {
 	}
 }
 
-// This is a rough estimate of the number of tokens in a string.
+// This is an estimate of the number of tokens in a string.
 func TokenEstimator(msg GoGPTMessage, model string) int {
-	//return len(m.Content) / 4
+
 	tkm, err := tiktoken.EncodingForModel(model)
 
 	if err != nil {
@@ -55,7 +55,6 @@ func TokenEstimator(msg GoGPTMessage, model string) int {
 	token := tkm.Encode(msg.Content, nil, nil)
 
 	return len(token)
-
 }
 
 func NewGoGPTChat(key string) *GoGPTChat {

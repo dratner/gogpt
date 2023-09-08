@@ -163,6 +163,7 @@ func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
 		SetHeader("Content-Type", "application/json").
 		SetBody(g).
 		Post(g.Endpoint)
+
 	if err != nil {
 		return nil, err
 	}
