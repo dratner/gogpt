@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/invopop/jsonschema"
@@ -97,18 +98,22 @@ type GoGPTQuery struct {
 	OrgName         string             `json:"-"`
 	OrgId           string             `json:"-"`
 	Endpoint        string             `json:"-"`
+	Timeout         time.Duration      `json:"-"`
 }
 
 func NewGoGPTQuery(key string) *GoGPTQuery {
 
 	// Set minimal defaults
 
+	d, _ := time.ParseDuration("30s")
+
 	return &GoGPTQuery{
 		Key:         key,
 		Endpoint:    API_ENDPOINT,
 		Model:       MODEL_35_TURBO,
 		Temperature: 0.7,
-		MaxTokens:   150,
+		MaxTokens:   250,
+		Timeout:     d,
 	}
 }
 
@@ -147,6 +152,7 @@ func (g *GoGPTQuery) AddMessage(role string, content string) *GoGPTQuery {
 func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
 
 	client := resty.New()
+	client.SetTimeout(g.Timeout)
 
 	if len(g.Messages) == 0 {
 		return nil, fmt.Errorf("no messages provided")
@@ -157,6 +163,7 @@ func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
 		SetHeader("Content-Type", "application/json").
 		SetBody(g).
 		Post(g.Endpoint)
+
 	if err != nil {
 		return nil, err
 	}

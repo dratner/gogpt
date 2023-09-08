@@ -26,4 +26,6 @@ jobs:
     - name: Test
       env:
         OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+        OPENAI_ORG_NAME: ${{ secrets.OPENAI_ORG_NAME }}
+        OPENAI_ORG_ID: ${{ secrets.OPENAI_ORG_ID }}
       run: go test -v ./...
