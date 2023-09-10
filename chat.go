@@ -69,8 +69,8 @@ type GoGPTChat struct {
 }
 
 // A convenience function for method chaining
-func (c *GoGPTChat) AddMessage(role string, content string) *GoGPTChat {
-	c.Query.AddMessage(role, content)
+func (c *GoGPTChat) AddMessage(role string, name string, content string) *GoGPTChat {
+	c.Query.AddMessage(role, name, content)
 	return c
 }
 
@@ -129,7 +129,7 @@ func (g *GoGPTChat) Generate() (*GoGPTResponse, error) {
 		return nil, err
 	}
 
-	g.AddMessage(ROLE_ASSISTANT, resp.Choices[0].Message.Content)
+	g.AddMessage(ROLE_ASSISTANT, "", resp.Choices[0].Message.Content)
 
 	return resp, nil
 }
@@ -141,10 +141,10 @@ func (c *GoGPTChat) summarize(msgs []GoGPTMessage, max_tokens int) (string, erro
 	}
 
 	q := NewGoGPTQuery(c.Query.Key)
-	q.AddMessage(ROLE_SYSTEM, fmt.Sprintf("Summarize the following chat history in less than %d words.", max_tokens))
+	q.AddMessage(ROLE_SYSTEM, "", fmt.Sprintf("Summarize the following chat history in less than %d words.", max_tokens))
 
 	for _, msg := range msgs {
-		q.AddMessage(msg.Role, msg.Content)
+		q.AddMessage(msg.Role, msg.Name, msg.Content)
 	}
 
 	generated, err := q.Generate()
