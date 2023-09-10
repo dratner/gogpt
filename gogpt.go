@@ -137,11 +137,12 @@ func (g *GoGPTQuery) AddFunction(name string, desc string, obj interface{}) (*Go
 	return g, nil
 }
 
-func (g *GoGPTQuery) AddMessage(role string, content string) *GoGPTQuery {
+func (g *GoGPTQuery) AddMessage(role string, name string, content string) *GoGPTQuery {
 
 	msg := GoGPTMessage{
 		Role:    role,
 		Content: content,
+		Name:    name,
 	}
 
 	g.Messages = append(g.Messages, msg)
