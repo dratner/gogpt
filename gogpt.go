@@ -17,12 +17,14 @@ import (
 */
 
 const (
-	API_ENDPOINT   = "https://api.openai.com/v1/chat/completions"
-	MODEL_35_TURBO = "gpt-3.5-turbo"
-	ROLE_SYSTEM    = "system"
-	ROLE_USER      = "user"
-	ROLE_ASSISTANT = "assistant"
-	ROLE_FUNCTION  = "function"
+	API_ENDPOINT        = "https://api.openai.com/v1/chat/completions"
+	EMBEDDINGS_ENDPOINT = "https://api.openai.com/v1/embeddings"
+	MODEL_35_TURBO      = "gpt-3.5-turbo"
+	MODEL_EMBEDDING_ADA = "text-embedding-ada-002"
+	ROLE_SYSTEM         = "system"
+	ROLE_USER           = "user"
+	ROLE_ASSISTANT      = "assistant"
+	ROLE_FUNCTION       = "function"
 )
 
 type GoGPTFunctionCall struct {
