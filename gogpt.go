@@ -25,6 +25,7 @@ const (
 	ROLE_USER           = "user"
 	ROLE_ASSISTANT      = "assistant"
 	ROLE_FUNCTION       = "function"
+	RETRIES             = 3
 )
 
 type GoGPTFunctionCall struct {
@@ -152,7 +153,7 @@ func (g *GoGPTQuery) AddMessage(role string, name string, content string) *GoGPT
 	return g
 }
 
-func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
+func (g *GoGPTQuery) send() (*resty.Response, error) {
 
 	client := resty.New()
 	client.SetTimeout(g.Timeout)
@@ -166,6 +167,24 @@ func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
 		SetHeader("Content-Type", "application/json").
 		SetBody(g).
 		Post(g.Endpoint)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
+
+	var resp *resty.Response
+	var err error
+
+	for i := 0; i < RETRIES; i++ {
+		if resp == nil {
+			resp, err = g.send()
+		}
+	}
 
 	if err != nil {
 		return nil, err
