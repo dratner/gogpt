@@ -48,6 +48,7 @@ func buildTestQueryHelper() (*GoGPTQuery, error) {
 	gpt.OrgName = conf.GptOrgName
 	gpt.OrgId = conf.GptOrgId
 	gpt.MaxTokens = 100
+	gpt.Debug = true
 
 	return gpt, nil
 }
@@ -55,6 +56,7 @@ func buildTestQueryHelper() (*GoGPTQuery, error) {
 /*
 This is the simplest test - just a round-trip to the API.
 */
+
 func TestGenerate(t *testing.T) {
 
 	gpt, err := buildTestQueryHelper()
@@ -69,6 +71,7 @@ func TestGenerate(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("Error generating: %v", err)
+		return
 	}
 
 	t.Logf("Generated: %+v", generated)
@@ -129,6 +132,7 @@ func TestGenerateWithFunctions(t *testing.T) {
 		t.Logf("It walks!\n")
 	} else {
 		t.Errorf("Error: %+v", e)
+		return
 	}
 }
 
@@ -152,6 +156,7 @@ func TestGenerateInfiniteChat(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("error generating: %s", err)
+		return
 	}
 
 	t.Logf("GPT1: %s\n\n", generated.Choices[0].Message.Content)
