@@ -48,7 +48,6 @@ func buildTestQueryHelper() (*GoGPTQuery, error) {
 	gpt.OrgName = conf.GptOrgName
 	gpt.OrgId = conf.GptOrgId
 	gpt.MaxTokens = 100
-	gpt.Debug = true
 
 	return gpt, nil
 }
@@ -150,7 +149,7 @@ func TestGenerateInfiniteChat(t *testing.T) {
 	chat1.AddMessage(ROLE_SYSTEM, "", "You are a bumbling but confident French detective talking to your superintendant.").AddMessage(ROLE_USER, "", "Solve the great train robbery.")
 	chat2.AddMessage(ROLE_SYSTEM, "", "You are a serious and dour English police superintendant talking to a detective. You want him to solve the great train robbery.")
 
-	t.Logf("GENERATING SEED MESSAGE\n")
+	t.Logf("generating seed message")
 
 	generated, err := chat1.Generate()
 
