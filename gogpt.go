@@ -60,7 +60,7 @@ type GoGPTError struct {
 	Message string `json:"message"`
 	ErrType string `json:"type"`
 	Param   string `json:"param"`
-	Code    string `json:"code"`
+	Code    int    `json:"code"`
 }
 
 type GoGPTResponse struct {
@@ -180,6 +180,8 @@ func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
 	var resp *resty.Response
 	var err error
 
+	gptResp := new(GoGPTResponse)
+
 	for i := 0; i < RETRIES; i++ {
 		if resp == nil {
 			resp, err = g.send()
@@ -190,7 +192,6 @@ func (g *GoGPTQuery) Generate() (*GoGPTResponse, error) {
 		return nil, err
 	}
 
-	gptResp := new(GoGPTResponse)
 	err = json.Unmarshal(resp.Body(), &gptResp)
 
 	if err != nil {

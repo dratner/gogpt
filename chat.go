@@ -113,12 +113,12 @@ func (g *GoGPTChat) Generate() (*GoGPTResponse, error) {
 
 		summary, err := g.summarize(messages_to_summarize, max_context)
 
-		messages = append(messages, GoGPTMessage{Role: ROLE_SYSTEM, Content: summary})
-		messages = append(messages, g.Query.Messages[len(g.Query.Messages)-1])
-
 		if err != nil {
 			return nil, err
 		}
+
+		messages = append(messages, GoGPTMessage{Role: ROLE_SYSTEM, Content: summary})
+		messages = append(messages, g.Query.Messages[len(g.Query.Messages)-1])
 
 		g.Query.Messages = messages
 	}

@@ -55,6 +55,7 @@ func buildTestQueryHelper() (*GoGPTQuery, error) {
 /*
 This is the simplest test - just a round-trip to the API.
 */
+
 func TestGenerate(t *testing.T) {
 
 	gpt, err := buildTestQueryHelper()
@@ -69,6 +70,7 @@ func TestGenerate(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("Error generating: %v", err)
+		return
 	}
 
 	t.Logf("Generated: %+v", generated)
@@ -129,6 +131,7 @@ func TestGenerateWithFunctions(t *testing.T) {
 		t.Logf("It walks!\n")
 	} else {
 		t.Errorf("Error: %+v", e)
+		return
 	}
 }
 
@@ -141,17 +144,26 @@ func TestGenerateInfiniteChat(t *testing.T) {
 	}
 
 	chat1 := NewGoGPTChat(gpt.Key)
-	chat2 := NewGoGPTChat(gpt.Key)
+	chat1.Query.OrgName = gpt.OrgName
+	chat1.Query.OrgId = gpt.OrgId
+	chat1.Query.MaxTokens = 100
 
 	chat1.AddMessage(ROLE_SYSTEM, "", "You are a bumbling but confident French detective talking to your superintendant.").AddMessage(ROLE_USER, "", "Solve the great train robbery.")
+
+	chat2 := NewGoGPTChat(gpt.Key)
+	chat2.Query.OrgName = gpt.OrgName
+	chat2.Query.OrgId = gpt.OrgId
+	chat2.Query.MaxTokens = 100
+
 	chat2.AddMessage(ROLE_SYSTEM, "", "You are a serious and dour English police superintendant talking to a detective. You want him to solve the great train robbery.")
 
-	t.Logf("GENERATING SEED MESSAGE\n")
+	t.Logf("generating seed message")
 
 	generated, err := chat1.Generate()
 
 	if err != nil {
 		t.Errorf("error generating: %s", err)
+		return
 	}
 
 	t.Logf("GPT1: %s\n\n", generated.Choices[0].Message.Content)
