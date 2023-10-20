@@ -57,10 +57,10 @@ type GoGPTUsage struct {
 }
 
 type GoGPTError struct {
-	Message string `json:"message"`
-	ErrType string `json:"type"`
-	Param   string `json:"param"`
-	Code    int    `json:"code"`
+	Message string      `json:"message"`
+	ErrType string      `json:"type"`
+	Param   string      `json:"param"`
+	Code    interface{} `json:"code"`
 }
 
 type GoGPTResponse struct {
