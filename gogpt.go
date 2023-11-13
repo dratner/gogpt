@@ -19,7 +19,8 @@ import (
 const (
 	API_ENDPOINT        = "https://api.openai.com/v1/chat/completions"
 	EMBEDDINGS_ENDPOINT = "https://api.openai.com/v1/embeddings"
-	MODEL_35_TURBO      = "gpt-3.5-turbo"
+	MODEL_35_TURBO      = "gpt-3.5-turbo-1106"
+	MODEL_4             = "gpt-4"
 	MODEL_EMBEDDING_ADA = "text-embedding-ada-002"
 	ROLE_SYSTEM         = "system"
 	ROLE_USER           = "user"
@@ -154,6 +155,10 @@ func (g *GoGPTQuery) AddMessage(role string, name string, content string) *GoGPT
 }
 
 func (g *GoGPTQuery) send() (*resty.Response, error) {
+
+	if g.Model != MODEL_35_TURBO && g.Model != MODEL_4 {
+		g.Model = MODEL_35_TURBO
+	}
 
 	client := resty.New()
 	client.SetTimeout(g.Timeout)

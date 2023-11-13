@@ -16,29 +16,26 @@ const (
 	The following helper functions are provided to allow infinite chats.
 	The max length for a reply should be set using MAX_TOKENS.
 	The initial SYSTEM prompt is immutable.
-	The most recent message is too important to summarize.
+	The most recent messages are too important to summarize.
 
 	This means we have a number of tokens available for context equal to:
 
-	MAX_MODEL_TOKENS - MAX_TOKENS - TokenEstimator(SYSTEM_PROMPT) - TokenEstimator(MOST_RECENT_MESSAGE) = MAX_CONTEXT_SIZE
+	MAX_MODEL_TOKENS - MAX_TOKENS - TokenEstimator(SYSTEM_PROMPT) - TokenEstimator(MOST_RECENT_MESSAGES) = MAX_CONTEXT_SIZE
 
-	If this number is smaller than the number of tokens in the message history, we need to summarize.
+	If this number is larger than the number of tokens the model supports, we need to summarize.
 
-	We do this by asking ChatGPT to summarize the message history into a single message of less than MAX_CONTEXT_SIZE tokens.
-	This summary is then appended to the SYSTEM prompt at query time and the message history is cleared.
-
-	The summary is stored seperately from the message history, however, since it will need to be updated in future summaries:
-
-	GetSummary(currentSummary, messageHistory) -> newSummary
-
+	We do this by asking ChatGPT to summarize the message history into a single message of less than MAX_TOKENS tokens.
+	A new message history is then generated with the initial prompt, the summary, and the queue of new messages.
 */
 
 func MaxQueryTokens(model string) int {
 	switch model {
+	case MODEL_4:
+		return 8192
 	case MODEL_35_TURBO:
-		return 4096
+		return 16385
 	default:
-		return 2048
+		return 16385
 	}
 }
 
@@ -64,64 +61,100 @@ func NewGoGPTChat(key string) *GoGPTChat {
 }
 
 type GoGPTChat struct {
-	Query   *GoGPTQuery
-	Summary string
+	Query        *GoGPTQuery
+	Summary      string
+	MessageQueue []GoGPTMessage
+	prompt       *GoGPTMessage
 }
 
 // A convenience function for method chaining
 func (c *GoGPTChat) AddMessage(role string, name string, content string) *GoGPTChat {
-	c.Query.AddMessage(role, name, content)
+
+	msg := GoGPTMessage{
+		Role:    role,
+		Content: content,
+		Name:    name,
+	}
+
+	c.MessageQueue = append(c.MessageQueue, msg)
+
 	return c
+}
+
+func (g *GoGPTChat) summarize(queueSize int) error {
+
+	// if we don't already know the prompt, find it
+	if g.prompt == nil {
+		for _, msg := range g.Query.Messages {
+			if msg.Role == ROLE_SYSTEM {
+				g.prompt = &msg
+				break
+			}
+		}
+	}
+
+	// if we can't find the prompt, we can't summarize
+	if g.prompt == nil {
+		return fmt.Errorf("no prompt found")
+	}
+
+	promptSize := TokenEstimator(*g.prompt, g.Query.Model)
+
+	// make sure the prompt, the summary, the queue, and a return message will fit
+	if (g.Query.MaxTokens + queueSize + promptSize + BUFF_MARGIN) > MaxQueryTokens(g.Query.Model) {
+		return fmt.Errorf("not enough tokens to summarize")
+	}
+
+	q := NewGoGPTQuery(g.Query.Key)
+
+	for _, msg := range g.Query.Messages {
+		if &msg != g.prompt {
+			q.AddMessage(msg.Role, msg.Name, msg.Content)
+		}
+	}
+
+	q.AddMessage(ROLE_SYSTEM, "", fmt.Sprintf("Summarize the following chat history. You must use less than %d words.", g.Query.MaxTokens))
+	q.MaxTokens = g.Query.MaxTokens
+
+	resp, err := q.Generate()
+
+	if err != nil {
+		return err
+	}
+
+	g.Query.Messages = []GoGPTMessage{}
+	g.Query.AddMessage(ROLE_SYSTEM, "", g.prompt.Content)
+	g.Query.AddMessage(ROLE_SYSTEM, "", resp.Choices[0].Message.Content)
+
+	return nil
 }
 
 // A function that encapsulates the query generation method and handles summariation.
 func (g *GoGPTChat) Generate() (*GoGPTResponse, error) {
 
-	var messages []GoGPTMessage
-	var messages_to_summarize []GoGPTMessage
+	var err error
 
-	total_tokens := MaxQueryTokens(g.Query.Model)
-	prompt_tokens := 0
-	func_tokens := 0
-	context_tokens := 0
-	new_message_tokens := 0
-	first_sys_msg := true
+	usage := g.Query.MaxTokens + BUFF_MARGIN // the maximum size of the return message plus a buffer
 
-	for i, msg := range g.Query.Messages {
-		if msg.Role == ROLE_SYSTEM && first_sys_msg {
-			prompt_tokens += TokenEstimator(msg, g.Query.Model)
-			messages = append(messages, msg)
-			first_sys_msg = false
-		} else if msg.Role == ROLE_FUNCTION {
-			func_tokens += TokenEstimator(msg, g.Query.Model)
-			messages = append(messages, msg)
-		} else if i == len(g.Query.Messages)-1 {
-			new_message_tokens += TokenEstimator(msg, g.Query.Model)
-		} else {
-			context_tokens += TokenEstimator(msg, g.Query.Model)
-			messages_to_summarize = append(messages_to_summarize, msg)
-		}
+	for _, msg := range g.Query.Messages {
+		usage += TokenEstimator(msg, g.Query.Model)
 	}
 
-	max_context := total_tokens - prompt_tokens - new_message_tokens - func_tokens - BUFF_MARGIN
-
-	if max_context < g.Query.MaxTokens {
-		return nil, fmt.Errorf("not enough tokens left for a reply")
+	queueSize := 0
+	for _, msg := range g.MessageQueue {
+		queueSize += TokenEstimator(msg, g.Query.Model)
 	}
+	usage += queueSize
 
-	if max_context < context_tokens {
-
-		summary, err := g.summarize(messages_to_summarize, max_context)
-
+	if usage > MaxQueryTokens(g.Query.Model) {
+		err = g.summarize(queueSize)
 		if err != nil {
 			return nil, err
 		}
-
-		messages = append(messages, GoGPTMessage{Role: ROLE_SYSTEM, Content: summary})
-		messages = append(messages, g.Query.Messages[len(g.Query.Messages)-1])
-
-		g.Query.Messages = messages
 	}
+
+	g.Query.Messages = append(g.Query.Messages, g.MessageQueue...)
+	g.MessageQueue = []GoGPTMessage{}
 
 	resp, err := g.Query.Generate()
 
@@ -129,30 +162,7 @@ func (g *GoGPTChat) Generate() (*GoGPTResponse, error) {
 		return nil, err
 	}
 
-	g.AddMessage(ROLE_ASSISTANT, "", resp.Choices[0].Message.Content)
+	g.Query.AddMessage(ROLE_ASSISTANT, "", resp.Choices[0].Message.Content)
 
 	return resp, nil
-}
-
-func (c *GoGPTChat) summarize(msgs []GoGPTMessage, max_tokens int) (string, error) {
-
-	if len(msgs) == 0 {
-		return "", fmt.Errorf("no messages to summarize")
-	}
-
-	q := NewGoGPTQuery(c.Query.Key)
-	q.AddMessage(ROLE_SYSTEM, "", fmt.Sprintf("Summarize the following chat history in less than %d words.", max_tokens))
-
-	for _, msg := range msgs {
-		q.AddMessage(msg.Role, msg.Name, msg.Content)
-	}
-
-	generated, err := q.Generate()
-
-	if err != nil {
-		return "", err
-	}
-
-	return generated.Choices[0].Message.Content, nil
-
 }
