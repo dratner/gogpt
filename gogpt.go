@@ -20,7 +20,7 @@ const (
 	API_ENDPOINT        = "https://api.openai.com/v1/chat/completions"
 	EMBEDDINGS_ENDPOINT = "https://api.openai.com/v1/embeddings"
 	MODEL_35_TURBO      = "gpt-3.5-turbo-1106"
-	MODEL_4             = "gpt-4"
+	MODEL_4             = "gpt-4-1106-preview"
 	MODEL_EMBEDDING_ADA = "text-embedding-ada-002"
 	ROLE_SYSTEM         = "system"
 	ROLE_USER           = "user"
