@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/invopop/jsonschema v0.7.0
-	github.com/pkoukk/tiktoken-go v0.1.5
+	github.com/pkoukk/tiktoken-go v0.1.7
 )
 
 require (
