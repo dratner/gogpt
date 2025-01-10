@@ -23,6 +23,7 @@ const (
 	MODEL_4_TURBO       = "gpt-4-1106-preview"
 	MODEL_4             = "gpt-4"
 	MODEL_4o            = "gpt-4o"
+	MODEL_4o_MINI       = "gpt-4o-mini"
 	MODEL_EMBEDDING_ADA = "text-embedding-ada-002"
 	ROLE_SYSTEM         = "system"
 	ROLE_USER           = "user"

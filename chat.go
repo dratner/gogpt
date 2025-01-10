@@ -32,6 +32,8 @@ func MaxQueryTokens(model string) int {
 	switch model {
 	case MODEL_4o:
 		return 128000
+	case MODEL_4o_MINI:
+		return 128000
 	case MODEL_4:
 		return 8192
 	case MODEL_35_TURBO:
